@@ -1,0 +1,17 @@
+{
+  "name": "permission",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/permission.js",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "openai": "^4.19.0"
+  }
+}

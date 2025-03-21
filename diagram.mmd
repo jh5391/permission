@@ -1,0 +1,119 @@
+classDiagram
+    class IPermissionChecker {
+        <<interface>>
+        +checkPermission(user: User, action: Action, resource: Resource) Promise~boolean~
+    }
+
+    class ICacheManager {
+        <<interface>>
+        +get(key: string) Promise~boolean~
+        +set(key: string, value: boolean) Promise~void~
+        +invalidate() Promise~void~
+    }
+
+    class IPermissionRepository {
+        <<interface>>
+        +findByRole(role: Role) Promise~RolePermission[]~
+        +create(data: Omit~RolePermission, 'id'~) Promise~RolePermission~
+        +update(id: number, data: Partial~RolePermission~) Promise~RolePermission~
+        +delete(criteria: Partial~RolePermission~) Promise~void~
+    }
+
+    class IPolicyRuleRepository {
+        <<interface>>
+        +findByResourceType(resourceType: ResourceType) Promise~PolicyRule[]~
+        +create(data: Omit~PolicyRule, 'id'~) Promise~PolicyRule~
+        +update(id: number, data: Partial~PolicyRule~) Promise~PolicyRule~
+        +delete(criteria: Partial~PolicyRule~) Promise~void~
+    }
+
+    class IConditionEvaluator {
+        <<interface>>
+        +evaluate(rule: PolicyRule, user: User, resource: Resource) boolean
+    }
+
+    class IConditionStrategy {
+        <<interface>>
+        +evaluate(user: User, resource: Resource, conditionValue: string) boolean
+    }
+
+    class PermissionManager {
+        -rbacChecker: RBACPermissionChecker
+        -abacChecker: ABACPermissionChecker
+        -permissionRepository: IPermissionRepository
+        -policyRuleRepository: IPolicyRuleRepository
+        -cacheManager: ICacheManager
+        -conditionEvaluator: IConditionEvaluator
+        +checkPermission(user: User, action: Action, resource: Resource) Promise~boolean~
+        +addPermission(roleId: number, resourceType: ResourceType, action: Action) Promise~void~
+        +removePermission(roleId: number, resourceType: ResourceType, action: Action) Promise~void~
+        +addPolicyRule(rule: Omit~PolicyRule, 'id' | 'createdAt' | 'updatedAt'~) Promise~void~
+        +updatePolicyRule(ruleId: number, updates: Partial~PolicyRule~) Promise~void~
+    }
+
+    class RBACPermissionChecker {
+        -repository: IPermissionRepository
+        +checkPermission(user: User, action: Action, resource: Resource) Promise~boolean~
+    }
+
+    class ABACPermissionChecker {
+        -repository: IPolicyRuleRepository
+        -conditionEvaluator: IConditionEvaluator
+        +checkPermission(user: User, action: Action, resource: Resource) Promise~boolean~
+    }
+
+    class ConditionEvaluator {
+        -strategies: Map~string, IConditionStrategy~
+        +evaluate(rule: PolicyRule, user: User, resource: Resource) boolean
+        +addStrategy(conditionType: string, strategy: IConditionStrategy) void
+    }
+
+    class CacheManager {
+        -cache: Map~string, CachedPermission~
+        -TTL: number
+        +get(key: string) Promise~boolean~
+        +set(key: string, value: boolean) Promise~void~
+        +invalidate() Promise~void~
+    }
+
+    class DepartmentMatchStrategy {
+        +evaluate(user: User, resource: Resource, conditionValue: string) boolean
+    }
+
+    class OwnershipStrategy {
+        +evaluate(user: User, resource: Resource, conditionValue: string) boolean
+    }
+
+    class StatusStrategy {
+        +evaluate(user: User, resource: Resource, conditionValue: string) boolean
+    }
+
+    class RoleCheckStrategy {
+        +evaluate(user: User, resource: Resource, conditionValue: string) boolean
+    }
+
+    class AssigneeCheckStrategy {
+        +evaluate(user: User, resource: Resource, conditionValue: string) boolean
+    }
+
+    IPermissionChecker <|.. PermissionManager
+    IPermissionChecker <|.. RBACPermissionChecker
+    IPermissionChecker <|.. ABACPermissionChecker
+    ICacheManager <|.. CacheManager
+    IConditionEvaluator <|.. ConditionEvaluator
+    IConditionStrategy <|.. DepartmentMatchStrategy
+    IConditionStrategy <|.. OwnershipStrategy
+    IConditionStrategy <|.. StatusStrategy
+    IConditionStrategy <|.. RoleCheckStrategy
+    IConditionStrategy <|.. AssigneeCheckStrategy
+
+    PermissionManager --> RBACPermissionChecker
+    PermissionManager --> ABACPermissionChecker
+    PermissionManager --> ICacheManager
+    PermissionManager --> IConditionEvaluator
+    PermissionManager --> IPermissionRepository
+    PermissionManager --> IPolicyRuleRepository
+    RBACPermissionChecker --> IPermissionRepository
+    ABACPermissionChecker --> IPolicyRuleRepository
+    ABACPermissionChecker --> IConditionEvaluator
+    ConditionEvaluator --> IConditionStrategy 
